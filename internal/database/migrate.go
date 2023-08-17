@@ -7,9 +7,16 @@ import (
 )
 
 func Migrate() {
-	err := pool.AutoMigrate(&models.User{})
+	var err error
+
+	err = pool.AutoMigrate(&models.User{})
 	if err != nil {
-		log.Fatal(constant.TAG_DATABASE, err, "Failed to migrate")
+		log.Fatal(constant.TAG_DATABASE, err, "Failed to migrate user model")
+	}
+
+	err = pool.AutoMigrate(&models.Todo{})
+	if err != nil {
+		log.Fatal(constant.TAG_DATABASE, err, "Failed to migrate todo model")
 	}
 
 	log.Print(constant.TAG_DATABASE, "Database Migration Completed")
