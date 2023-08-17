@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/rifqifarelmuhammad/simple-todo-with-golang/internal/constant"
 	"github.com/rifqifarelmuhammad/simple-todo-with-golang/internal/database"
@@ -9,7 +8,7 @@ import (
 	"github.com/rifqifarelmuhammad/simple-todo-with-golang/log"
 )
 
-func CreateUser(c *gin.Context, email string, hashedPassword []byte) error {
+func CreateUser(email string, hashedPassword []byte) error {
 	user := models.User{
 		UID:      uuid.New(),
 		Email:    email,
@@ -24,7 +23,7 @@ func CreateUser(c *gin.Context, email string, hashedPassword []byte) error {
 	return result.Error
 }
 
-func FindUserByEmail(c *gin.Context, email string) (*models.User, error) {
+func FindUserByEmail(email string) (*models.User, error) {
 	user := &models.User{}
 	result := database.GetInstance().Find(user, models.User{Email: email})
 	if result.Error != nil {
@@ -34,7 +33,7 @@ func FindUserByEmail(c *gin.Context, email string) (*models.User, error) {
 	return user, result.Error
 }
 
-func FindUserByUid(c *gin.Context, uid uuid.UUID) (*models.User, error) {
+func FindUserByUid(uid uuid.UUID) (*models.User, error) {
 	user := &models.User{}
 	result := database.GetInstance().Find(user, models.User{UID: uid})
 	if result.Error != nil {

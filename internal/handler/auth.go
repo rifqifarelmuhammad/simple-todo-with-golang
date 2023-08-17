@@ -65,7 +65,7 @@ func Registration(ctx *gin.Context) {
 		return
 	}
 
-	user, err := repository.FindUserByEmail(ctx, body.Email)
+	user, err := repository.FindUserByEmail(body.Email)
 	if err != nil {
 		utils.InternalServerErrorResponse(ctx)
 		return
@@ -89,7 +89,7 @@ func Registration(ctx *gin.Context) {
 		return
 	}
 
-	err = repository.CreateUser(ctx, body.Email, hashedPassword)
+	err = repository.CreateUser(body.Email, hashedPassword)
 	if err != nil {
 		utils.InternalServerErrorResponse(ctx)
 		return
@@ -126,7 +126,7 @@ func Login(ctx *gin.Context) {
 		return
 	}
 
-	user, err := repository.FindUserByEmail(ctx, body.Email)
+	user, err := repository.FindUserByEmail(body.Email)
 	if err != nil {
 		return
 	}

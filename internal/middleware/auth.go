@@ -40,7 +40,7 @@ func RequireAuth(ctx *gin.Context) {
 
 		uid, _ := uuid.FromBytes([]byte(claims["uid"].(string)))
 
-		user, err := repository.FindUserByUid(ctx, uid)
+		user, err := repository.FindUserByUid(uid)
 		if err != nil {
 			ctx.AbortWithStatus(http.StatusInternalServerError)
 		}

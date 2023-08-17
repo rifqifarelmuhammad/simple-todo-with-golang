@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rifqifarelmuhammad/simple-todo-with-golang/internal/dto"
 	"github.com/rifqifarelmuhammad/simple-todo-with-golang/utils"
 )
 
@@ -13,4 +14,39 @@ func GetTodo(ctx *gin.Context) {
 		ResponseMessage: utils.DEFAULT_RESPONSE_MESSAGE,
 		ResponseStatus:  utils.RESPONSE_STATUS_SUCCESS,
 	})
+}
+
+func CreateTodo(ctx *gin.Context) {
+	body := dto.CreateTodoRequest{}
+	err := ctx.Bind(&body)
+	if err != nil {
+		utils.ResponseHandler(ctx, utils.HTTPResponse{
+			ResponseCode:    http.StatusBadRequest,
+			ResponseMessage: "Failed to read request body",
+			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
+		})
+
+		return
+	}
+
+	if body.Title == "" {
+		utils.ResponseHandler(ctx, utils.HTTPResponse{
+			ResponseCode:    http.StatusBadRequest,
+			ResponseMessage: "Title cannot be empty",
+			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
+		})
+
+		return
+	}
+
+	if body.Description == "" {
+		utils.ResponseHandler(ctx, utils.HTTPResponse{
+			ResponseCode:    http.StatusBadRequest,
+			ResponseMessage: "Description cannot be empty",
+			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
+		})
+
+		return
+	}
+
 }
