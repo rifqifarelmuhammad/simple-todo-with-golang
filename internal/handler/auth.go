@@ -104,7 +104,7 @@ func Registration(ctx *gin.Context) {
 		ResponseCode:    http.StatusCreated,
 		ResponseMessage: "User successfully registered",
 		ResponseStatus:  utils.RESPONSE_STATUS_SUCCESS,
-		Data:            map[string]string{"accessToken": signedToken},
+		Data:            signedToken,
 	})
 }
 
@@ -151,7 +151,7 @@ func Login(ctx *gin.Context) {
 		ResponseCode:    http.StatusOK,
 		ResponseMessage: "Login successful",
 		ResponseStatus:  utils.RESPONSE_STATUS_SUCCESS,
-		Data:            map[string]string{"accessToken": signedToken},
+		Data:            signedToken,
 	})
 }
 

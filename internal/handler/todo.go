@@ -68,6 +68,6 @@ func CreateTodo(ctx *gin.Context) {
 		ResponseCode:    http.StatusCreated,
 		ResponseMessage: "Todo has been created",
 		ResponseStatus:  utils.RESPONSE_STATUS_SUCCESS,
-		Data:            map[string]interface{}{"todo": responseData},
+		Data:            responseData,
 	})
 }
