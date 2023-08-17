@@ -49,15 +49,25 @@ func CreateTodo(ctx *gin.Context) {
 
 		return
 	}
+
 	user := utils.GetCurrentUser(ctx)
-	err = repository.CreateTodo(user.UID, body)
+	todo, err := repository.CreateTodo(user.UID, body)
 	if err != nil {
 		return
+	}
+
+	responseData := dto.CreateTodoResponse{
+		ID:          todo.ID,
+		Title:       todo.Title,
+		Description: todo.Description,
+		IsCompleted: todo.IsCompleted,
+		UpdatedAt:   todo.UpdatedAt,
 	}
 
 	utils.ResponseHandler(ctx, utils.HTTPResponse{
 		ResponseCode:    http.StatusCreated,
 		ResponseMessage: "Todo has been created",
 		ResponseStatus:  utils.RESPONSE_STATUS_SUCCESS,
+		Data:            map[string]interface{}{"todo": responseData},
 	})
 }
