@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/rifqifarelmuhammad/simple-todo-with-golang/internal/dto"
+	"github.com/rifqifarelmuhammad/simple-todo-with-golang/internal/repository"
 	"github.com/rifqifarelmuhammad/simple-todo-with-golang/utils"
 )
 
@@ -48,5 +49,15 @@ func CreateTodo(ctx *gin.Context) {
 
 		return
 	}
+	user := utils.GetCurrentUser(ctx)
+	err = repository.CreateTodo(user.UID, body)
+	if err != nil {
+		return
+	}
 
+	utils.ResponseHandler(ctx, utils.HTTPResponse{
+		ResponseCode:    http.StatusCreated,
+		ResponseMessage: "Todo has been created",
+		ResponseStatus:  utils.RESPONSE_STATUS_SUCCESS,
+	})
 }

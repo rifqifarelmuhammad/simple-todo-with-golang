@@ -7,11 +7,12 @@ import (
 )
 
 type Todo struct {
-	ID          uuid.UUID `gorm:"primary key" json:"id" db:"id"`
-	Title       string    `json:"title" db:"title"`
-	Description string    `json:"description" db:"description"`
-	IsCompleted bool      `json:"is_completed" db:"is_completed"`
-	CreatedAt   time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
-	IsDeleted   bool      `json:"is_deleted" db:"is_deleted"`
+	ID          uuid.UUID `gorm:"primaryKey" json:"id"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	IsCompleted bool      `gorm:"default:false" json:"is_completed"`
+	CreatedAt   time.Time `gorm:"default:current_timestamp" json:"created_at"`
+	UpdatedAt   time.Time `gorm:"default:current_timestamp" json:"updated_at"`
+	IsDeleted   bool      `gorm:"default:false" json:"is_deleted"`
+	UserID      uuid.UUID
 }

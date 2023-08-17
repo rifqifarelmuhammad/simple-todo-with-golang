@@ -9,7 +9,7 @@ import (
 )
 
 func CreateUser(email string, hashedPassword []byte) error {
-	user := models.User{
+	user := &models.User{
 		UID:      uuid.New(),
 		Email:    email,
 		Password: string(hashedPassword),
