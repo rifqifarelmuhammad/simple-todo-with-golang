@@ -7,7 +7,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/google/uuid"
 	"github.com/rifqifarelmuhammad/simple-todo-with-golang/config"
 	"github.com/rifqifarelmuhammad/simple-todo-with-golang/internal/constant"
 	"github.com/rifqifarelmuhammad/simple-todo-with-golang/internal/repository"
@@ -30,7 +29,6 @@ func RequireAuth(ctx *gin.Context) {
 
 	if err != nil {
 		log.Error(constant.TAG_MIDDLEWARE, rawToken, err, "auth[RequireAuth]: jwt.Parse failed to parse signedToken")
-		panic(err)
 	}
 
 	if claims, ok := rawToken.Claims.(jwt.MapClaims); ok && rawToken.Valid {
@@ -38,7 +36,7 @@ func RequireAuth(ctx *gin.Context) {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 		}
 
-		uid, _ := uuid.FromBytes([]byte(claims["uid"].(string)))
+		uid := claims["uid"].(string)
 
 		user := repository.FindUserByUid(uid)
 		if user.Email == "" {

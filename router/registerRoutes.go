@@ -21,4 +21,5 @@ func TodoRoutes() {
 	todoRoutes := router.Group(TODO_BASE_URL)
 	todoRoutes.GET("", middleware.RequireAuth, handler.GetAllTodo)
 	todoRoutes.POST("", middleware.RequireAuth, handler.CreateTodo)
+	todoRoutes.PATCH("/:todoId", middleware.RequireAuth, handler.UpdateTodo)
 }

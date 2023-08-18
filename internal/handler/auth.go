@@ -7,7 +7,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/google/uuid"
 	"github.com/rifqifarelmuhammad/simple-todo-with-golang/config"
 	"github.com/rifqifarelmuhammad/simple-todo-with-golang/internal/constant"
 	"github.com/rifqifarelmuhammad/simple-todo-with-golang/internal/dto"
@@ -178,7 +177,7 @@ func BodyRequestValidation(ctx *gin.Context, funcName string, body dto.AuthReque
 	return true
 }
 
-func SetAccessToken(ctx *gin.Context, uid uuid.UUID) string {
+func SetAccessToken(ctx *gin.Context, uid string) string {
 	rawToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"uid": uid,
 		"exp": time.Now().Add(time.Hour * 24 * time.Duration(config.GetInstance().JWT.ExpireTime)).Unix(),

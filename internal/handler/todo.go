@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/rifqifarelmuhammad/simple-todo-with-golang/internal/dto"
 	"github.com/rifqifarelmuhammad/simple-todo-with-golang/internal/repository"
 	"github.com/rifqifarelmuhammad/simple-todo-with-golang/utils"
@@ -70,5 +71,16 @@ func CreateTodo(ctx *gin.Context) {
 		ResponseMessage: "Todo has been created",
 		ResponseStatus:  utils.RESPONSE_STATUS_SUCCESS,
 		Data:            responseData,
+	})
+}
+
+func UpdateTodo(ctx *gin.Context) {
+	todoId, _ := uuid.FromBytes([]byte(ctx.Param("todoId")))
+
+	utils.ResponseHandler(ctx, utils.HTTPResponse{
+		ResponseCode:    http.StatusOK,
+		ResponseMessage: "Todo has been updated",
+		ResponseStatus:  utils.RESPONSE_STATUS_SUCCESS,
+		Data:            todoId,
 	})
 }

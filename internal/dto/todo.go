@@ -2,13 +2,11 @@ package dto
 
 import (
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type (
 	GeneralTodoResponse struct {
-		ID          uuid.UUID `json:"id"`
+		ID          string    `json:"id"`
 		Title       string    `json:"title"`
 		Description string    `json:"description"`
 		IsCompleted bool      `json:"is_completed"`
