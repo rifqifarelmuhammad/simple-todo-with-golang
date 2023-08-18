@@ -37,9 +37,8 @@ func RequireAuth(ctx *gin.Context) {
 		}
 
 		uid := claims["uid"].(string)
-
 		user := repository.FindUserByUid(uid)
-		if user.Email == "" {
+		if user.UID == "" {
 			ctx.AbortWithStatus(http.StatusForbidden)
 		}
 

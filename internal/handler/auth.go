@@ -65,7 +65,7 @@ func Registration(ctx *gin.Context) {
 	}
 
 	user := repository.FindUserByEmail(body.Email)
-	if user.Email != "" {
+	if user.UID != "" {
 		utils.ResponseHandler(ctx, utils.HTTPResponse{
 			ResponseCode:    http.StatusConflict,
 			ResponseMessage: "User already exists",
@@ -81,7 +81,7 @@ func Registration(ctx *gin.Context) {
 		panic(err)
 	}
 
-	repository.CreateUser(body.Email, hashedPassword)
+	user = repository.CreateUser(body.Email, hashedPassword)
 
 	signedToken := SetAccessToken(ctx, user.UID)
 
@@ -113,7 +113,7 @@ func Login(ctx *gin.Context) {
 
 	user := repository.FindUserByEmail(body.Email)
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.Password))
-	if user.Email == "" || err != nil {
+	if user.UID == "" || err != nil {
 		utils.ResponseHandler(ctx, utils.HTTPResponse{
 			ResponseCode:    http.StatusUnauthorized,
 			ResponseMessage: "Invalid Email or Password",

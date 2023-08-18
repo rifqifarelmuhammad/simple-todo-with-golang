@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/rifqifarelmuhammad/simple-todo-with-golang/internal/dto"
 	"github.com/rifqifarelmuhammad/simple-todo-with-golang/internal/repository"
 	"github.com/rifqifarelmuhammad/simple-todo-with-golang/utils"
@@ -75,12 +74,24 @@ func CreateTodo(ctx *gin.Context) {
 }
 
 func UpdateTodo(ctx *gin.Context) {
-	todoId, _ := uuid.FromBytes([]byte(ctx.Param("todoId")))
+	user := utils.GetCurrentUser(ctx)
+	todo := repository.FindTodoById(ctx.Param("todoId"))
+	if todo.ID == "" || todo.UserID != user.UID {
+		utils.ResponseHandler(ctx, utils.HTTPResponse{
+			ResponseCode:    http.StatusBadRequest,
+			ResponseMessage: "Invalid Todo ID",
+			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
+		})
+
+		return
+	}
+
+	updatedTodo := repository.UpdateIsCompleted(todo)
 
 	utils.ResponseHandler(ctx, utils.HTTPResponse{
 		ResponseCode:    http.StatusOK,
 		ResponseMessage: "Todo has been updated",
 		ResponseStatus:  utils.RESPONSE_STATUS_SUCCESS,
-		Data:            todoId,
+		Data:            updatedTodo,
 	})
 }

@@ -8,7 +8,7 @@ import (
 	"github.com/rifqifarelmuhammad/simple-todo-with-golang/log"
 )
 
-func CreateUser(email string, hashedPassword []byte) {
+func CreateUser(email string, hashedPassword []byte) *models.User {
 	user := &models.User{
 		UID:      (uuid.New()).String(),
 		Email:    email,
@@ -20,6 +20,8 @@ func CreateUser(email string, hashedPassword []byte) {
 		log.Error(constant.TAG_REPOSITORY, result, result.Error, "user[CreateUser]: Error query db on database.GetInstance().Create(args)")
 		panic(result.Error)
 	}
+
+	return user
 }
 
 func FindUserByEmail(email string) *models.User {

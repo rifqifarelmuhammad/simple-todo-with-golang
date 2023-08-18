@@ -10,7 +10,6 @@ import (
 )
 
 func FindTodoById(id string) *models.Todo {
-	// fmt.Println(id)
 	todo := &models.Todo{}
 	result := database.GetInstance().Find(todo, models.Todo{ID: id})
 	if result.Error != nil {
@@ -23,7 +22,9 @@ func FindTodoById(id string) *models.Todo {
 
 func FindTodoByUserId(userId string) *[]dto.GeneralTodoResponse {
 	todos := &[]dto.GeneralTodoResponse{}
-	result := database.GetInstance().Raw("SELECT id, title, description, is_completed, updated_at FROM todos WHERE user_id = ?", userId).Scan(todos)
+	result := database.GetInstance().
+		Raw("SELECT id, title, description, is_completed, updated_at FROM todos WHERE user_id = ?", userId).
+		Scan(todos)
 	if result.Error != nil {
 		log.Error(constant.TAG_REPOSITORY, result, result.Error, "todo[FindTodoByUserId]: Error query db on database.GetInstance().Raw(args).Scan")
 		panic(result.Error)
@@ -32,12 +33,12 @@ func FindTodoByUserId(userId string) *[]dto.GeneralTodoResponse {
 	return todos
 }
 
-func CreateTodo(uid string, data dto.CreateTodoRequest) *models.Todo {
+func CreateTodo(userId string, data dto.CreateTodoRequest) *models.Todo {
 	todo := &models.Todo{
 		ID:          (uuid.New()).String(),
 		Title:       data.Title,
 		Description: data.Description,
-		UserID:      uid,
+		UserID:      userId,
 	}
 
 	result := database.GetInstance().Create(todo)
@@ -47,4 +48,17 @@ func CreateTodo(uid string, data dto.CreateTodoRequest) *models.Todo {
 	}
 
 	return todo
+}
+
+func UpdateIsCompleted(todo *models.Todo) *dto.UpdateTodoResponse {
+	response := &dto.UpdateTodoResponse{}
+	result := database.GetInstance().
+		Raw("UPDATE todos SET is_completed = ?, updated_at = current_timestamp WHERE id = ? RETURNING is_completed, updated_at", !todo.IsCompleted, todo.ID).
+		Scan(response)
+	if result.Error != nil {
+		log.Error(constant.TAG_REPOSITORY, result, result.Error, "todo[UpdateIsCompleted]: Error query db on database.GetInstance(args).Raw(args)")
+		panic(result.Error)
+	}
+
+	return response
 }
