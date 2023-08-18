@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 	"net/mail"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -29,15 +31,20 @@ func Registration(ctx *gin.Context) {
 		return
 	}
 
-	valid := BodyRequestValidation(ctx, "Registration", body.AuthRequest)
+	valid := EmailPasswordIsValid(ctx, "Registration", body.AuthRequest)
 	if !valid {
 		return
 	}
 
-	if body.ConfirmationPassword == "" {
+	confirmationPasswordIsEmpty := IsEmpty(ctx, body.ConfirmationPassword, "Confirmation password")
+	if confirmationPasswordIsEmpty {
+		return
+	}
+
+	if len(body.Password) < 8 {
 		utils.ResponseHandler(ctx, utils.HTTPResponse{
 			ResponseCode:    http.StatusBadRequest,
-			ResponseMessage: "Confirmation password cannot be empty",
+			ResponseMessage: "Password too short",
 			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
 		})
 
@@ -54,17 +61,9 @@ func Registration(ctx *gin.Context) {
 		return
 	}
 
-	if len(body.Password) < 8 {
-		utils.ResponseHandler(ctx, utils.HTTPResponse{
-			ResponseCode:    http.StatusBadRequest,
-			ResponseMessage: "Password too short",
-			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
-		})
+	lowerCasedEmail := strings.ToLower(body.Email)
 
-		return
-	}
-
-	user := repository.FindUserByEmail(body.Email)
+	user := repository.FindUserByEmail(lowerCasedEmail)
 	if user.UID != "" {
 		utils.ResponseHandler(ctx, utils.HTTPResponse{
 			ResponseCode:    http.StatusConflict,
@@ -75,13 +74,13 @@ func Registration(ctx *gin.Context) {
 		return
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(body.Password), 10)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(body.Password), config.GetInstance().JWT.Cost)
 	if err != nil {
 		log.Error(constant.TAG_SERVICES, hashedPassword, err, "auth[Registration]: bcrypt.GenerateFromPassword failed to hash password")
 		panic(err)
 	}
 
-	user = repository.CreateUser(body.Email, hashedPassword)
+	user = repository.CreateUser(lowerCasedEmail, hashedPassword)
 
 	signedToken := SetAccessToken(ctx, user.UID)
 
@@ -106,7 +105,7 @@ func Login(ctx *gin.Context) {
 		return
 	}
 
-	valid := BodyRequestValidation(ctx, "Registration", body)
+	valid := EmailPasswordIsValid(ctx, "Registration", body)
 	if !valid {
 		return
 	}
@@ -143,6 +142,21 @@ func ChangePassword(ctx *gin.Context) {
 			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
 		})
 
+		return
+	}
+
+	isEmpty := IsEmpty(ctx, body.OldPassword, "Old password")
+	if isEmpty {
+		return
+	}
+
+	isEmpty = IsEmpty(ctx, body.NewPassword, "New password")
+	if isEmpty {
+		return
+	}
+
+	isEmpty = IsEmpty(ctx, body.ConfirmationNewPassword, "Confirmation password")
+	if isEmpty {
 		return
 	}
 
@@ -188,7 +202,7 @@ func ChangePassword(ctx *gin.Context) {
 		return
 	}
 
-	hashedNewPassword, err := bcrypt.GenerateFromPassword([]byte(body.NewPassword), 10)
+	hashedNewPassword, err := bcrypt.GenerateFromPassword([]byte(body.NewPassword), config.GetInstance().JWT.Cost)
 	if err != nil {
 		log.Error(constant.TAG_SERVICES, hashedNewPassword, err, "auth[ChangePassword]: bcrypt.GenerateFromPassword failed to hash password")
 		panic(err)
@@ -212,41 +226,6 @@ func Logout(ctx *gin.Context) {
 	})
 }
 
-func BodyRequestValidation(ctx *gin.Context, funcName string, body dto.AuthRequest) bool {
-	if body.Email == "" {
-		utils.ResponseHandler(ctx, utils.HTTPResponse{
-			ResponseCode:    http.StatusBadRequest,
-			ResponseMessage: "Email cannot be empty",
-			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
-		})
-
-		return false
-	}
-
-	_, err := mail.ParseAddress(body.Email)
-	if err != nil {
-		utils.ResponseHandler(ctx, utils.HTTPResponse{
-			ResponseCode:    http.StatusBadRequest,
-			ResponseMessage: "Invalid email",
-			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
-		})
-
-		return false
-	}
-
-	if body.Password == "" {
-		utils.ResponseHandler(ctx, utils.HTTPResponse{
-			ResponseCode:    http.StatusBadRequest,
-			ResponseMessage: "Password cannot be empty",
-			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
-		})
-
-		return false
-	}
-
-	return true
-}
-
 func SetAccessToken(ctx *gin.Context, uid string) string {
 	rawToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"uid": uid,
@@ -263,4 +242,43 @@ func SetAccessToken(ctx *gin.Context, uid string) string {
 	ctx.SetCookie(constant.ACCESS_TOKEN, signedToken, 3600*24*config.GetInstance().JWT.ExpireTime, "", "", true, true)
 
 	return signedToken
+}
+
+func EmailPasswordIsValid(ctx *gin.Context, funcName string, body dto.AuthRequest) bool {
+	isEmpty := IsEmpty(ctx, body.Email, "Email")
+	if isEmpty {
+		return false
+	}
+
+	_, err := mail.ParseAddress(body.Email)
+	if err != nil {
+		utils.ResponseHandler(ctx, utils.HTTPResponse{
+			ResponseCode:    http.StatusBadRequest,
+			ResponseMessage: "Invalid email",
+			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
+		})
+
+		return false
+	}
+
+	isEmpty = IsEmpty(ctx, body.Password, "Password")
+	if isEmpty {
+		return false
+	}
+
+	return true
+}
+
+func IsEmpty(ctx *gin.Context, data string, dataName string) bool {
+	if data == "" {
+		utils.ResponseHandler(ctx, utils.HTTPResponse{
+			ResponseCode:    http.StatusBadRequest,
+			ResponseMessage: fmt.Sprintf("%s cannot be empty", dataName),
+			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
+		})
+
+		return true
+	}
+
+	return false
 }

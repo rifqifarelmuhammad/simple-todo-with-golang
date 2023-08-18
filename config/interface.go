@@ -20,4 +20,5 @@ type Database struct {
 type JWT struct {
 	ExpireTime int
 	SecretKey  string
+	Cost       int
 }

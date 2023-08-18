@@ -12,4 +12,5 @@ const (
 
 	JWT_EXPIRE_TIME envKey = "JWT_EXPIRE_TIME"
 	JWT_SECRET_KEY  envKey = "JWT_SECRET_KEY"
+	JWT_COST        envKey = "JWT_COST"
 )

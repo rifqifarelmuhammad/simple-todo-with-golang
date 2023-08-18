@@ -39,6 +39,7 @@ func GenerateConfig() *Config {
 		JWT: JWT{
 			ExpireTime: StringToInt(GetEnv(JWT_EXPIRE_TIME), 7),
 			SecretKey:  GetEnv(JWT_SECRET_KEY),
+			Cost:       StringToInt(GetEnv(JWT_COST), 7),
 		},
 	}
 }
