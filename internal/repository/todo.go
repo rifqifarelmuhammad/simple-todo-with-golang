@@ -1,8 +1,6 @@
 package repository
 
 import (
-	"fmt"
-
 	"github.com/google/uuid"
 	"github.com/rifqifarelmuhammad/simple-todo-with-golang/internal/constant"
 	"github.com/rifqifarelmuhammad/simple-todo-with-golang/internal/database"
@@ -25,7 +23,7 @@ func FindTodoById(id string) *models.Todo {
 func FindTodoByUserId(userId string) *[]dto.GeneralTodoResponse {
 	todos := &[]dto.GeneralTodoResponse{}
 	result := database.GetInstance().
-		Raw("SELECT id, title, description, is_completed, updated_at FROM todos WHERE user_id = ?", userId).
+		Raw("SELECT id, title, description, is_completed, updated_at FROM todos WHERE user_id = ? AND is_deleted = false", userId).
 		Scan(todos)
 	if result.Error != nil {
 		log.Error(constant.TAG_REPOSITORY, result, result.Error, "todo[FindTodoByUserId]: Error query db on database.GetInstance().Raw(args).Scan")
