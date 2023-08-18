@@ -25,11 +25,12 @@ func CreateTodo(ctx *gin.Context) {
 	body := dto.CreateTodoRequest{}
 	err := ctx.Bind(&body)
 	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, utils.HTTPResponse{
+		utils.ResponseHandler(ctx, utils.HTTPResponse{
 			ResponseCode:    http.StatusBadRequest,
 			ResponseMessage: "Failed to read request body",
 			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
 		})
+		return
 	}
 
 	isNotEmpty := utils.IsNotEmpty(ctx, body.Title, "Title")
@@ -62,6 +63,9 @@ func CreateTodo(ctx *gin.Context) {
 
 func UpdateTodo(ctx *gin.Context) {
 	todo := TodoIDValidation(ctx)
+	if todo == nil {
+		return
+	}
 
 	updatedTodo := repository.UpdateIsCompleted(todo)
 
@@ -74,13 +78,17 @@ func UpdateTodo(ctx *gin.Context) {
 
 func DeleteTodo(ctx *gin.Context) {
 	todo := TodoIDValidation(ctx)
+	if todo == nil {
+		return
+	}
 
 	if todo.IsDeleted {
-		ctx.AbortWithStatusJSON(http.StatusMethodNotAllowed, utils.HTTPResponse{
+		utils.ResponseHandler(ctx, utils.HTTPResponse{
 			ResponseCode:    http.StatusMethodNotAllowed,
 			ResponseMessage: "Todo was deleted previously",
 			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
 		})
+		return
 	}
 
 	repository.UpdateIsDeleted(todo)
@@ -96,11 +104,12 @@ func TodoIDValidation(ctx *gin.Context) *models.Todo {
 	user := utils.GetCurrentUser(ctx)
 	todo := repository.FindTodoById(ctx.Param("todoId"))
 	if todo.ID == "" || todo.UserID != user.UID {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, utils.HTTPResponse{
+		utils.ResponseHandler(ctx, utils.HTTPResponse{
 			ResponseCode:    http.StatusBadRequest,
 			ResponseMessage: "Invalid Todo ID",
 			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
 		})
+		return nil
 	}
 
 	return todo

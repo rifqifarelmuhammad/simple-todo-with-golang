@@ -25,11 +25,12 @@ func Registration(ctx *gin.Context) {
 	body := dto.RegistrationRequest{}
 	err := ctx.Bind(&body)
 	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, utils.HTTPResponse{
+		utils.ResponseHandler(ctx, utils.HTTPResponse{
 			ResponseCode:    http.StatusBadRequest,
 			ResponseMessage: "Failed to read request body",
 			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
 		})
+		return
 	}
 
 	emailPasswordIsValid := EmailPasswordIsValid(ctx, "Registration", body.AuthRequest)
@@ -43,30 +44,33 @@ func Registration(ctx *gin.Context) {
 	}
 
 	if len(body.Password) < MINIMUM_PASSWORD_LENGTH {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, utils.HTTPResponse{
+		utils.ResponseHandler(ctx, utils.HTTPResponse{
 			ResponseCode:    http.StatusBadRequest,
 			ResponseMessage: "Password too short",
 			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
 		})
+		return
 	}
 
 	if body.Password != body.ConfirmationPassword {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, utils.HTTPResponse{
+		utils.ResponseHandler(ctx, utils.HTTPResponse{
 			ResponseCode:    http.StatusBadRequest,
 			ResponseMessage: "Password does not match confirmation password",
 			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
 		})
+		return
 	}
 
 	lowerCasedEmail := strings.ToLower(body.Email)
 
 	user := repository.FindUserByEmail(lowerCasedEmail)
 	if user.UID != "" {
-		ctx.AbortWithStatusJSON(http.StatusConflict, utils.HTTPResponse{
+		utils.ResponseHandler(ctx, utils.HTTPResponse{
 			ResponseCode:    http.StatusConflict,
 			ResponseMessage: "User already exists",
 			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
 		})
+		return
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(body.Password), config.GetInstance().JWT.Cost)
@@ -90,11 +94,12 @@ func Login(ctx *gin.Context) {
 	body := dto.AuthRequest{}
 	err := ctx.Bind(&body)
 	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, utils.HTTPResponse{
+		utils.ResponseHandler(ctx, utils.HTTPResponse{
 			ResponseCode:    http.StatusBadRequest,
 			ResponseMessage: "Failed to read request body",
 			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
 		})
+		return
 	}
 
 	emailPasswordIsValid := EmailPasswordIsValid(ctx, "Registration", body)
@@ -105,11 +110,12 @@ func Login(ctx *gin.Context) {
 	user := repository.FindUserByEmail(body.Email)
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.Password))
 	if user.UID == "" || err != nil {
-		ctx.AbortWithStatusJSON(http.StatusUnauthorized, utils.HTTPResponse{
+		utils.ResponseHandler(ctx, utils.HTTPResponse{
 			ResponseCode:    http.StatusUnauthorized,
 			ResponseMessage: "Invalid Email or Password",
 			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
 		})
+		return
 	}
 
 	signedToken := SetAccessToken(ctx, user.UID)
@@ -125,11 +131,12 @@ func ChangePassword(ctx *gin.Context) {
 	body := dto.ChangePasswordRequest{}
 	err := ctx.Bind(&body)
 	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, utils.HTTPResponse{
+		utils.ResponseHandler(ctx, utils.HTTPResponse{
 			ResponseCode:    http.StatusBadRequest,
 			ResponseMessage: "Failed to read request body",
 			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
 		})
+		return
 	}
 
 	isNotEmpty := utils.IsNotEmpty(ctx, body.OldPassword, "Old password")
@@ -148,37 +155,41 @@ func ChangePassword(ctx *gin.Context) {
 	}
 
 	if len(body.NewPassword) < MINIMUM_PASSWORD_LENGTH {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, utils.HTTPResponse{
+		utils.ResponseHandler(ctx, utils.HTTPResponse{
 			ResponseCode:    http.StatusBadRequest,
 			ResponseMessage: "Password too short",
 			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
 		})
+		return
 	}
 
 	if body.NewPassword != body.ConfirmationNewPassword {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, utils.HTTPResponse{
+		utils.ResponseHandler(ctx, utils.HTTPResponse{
 			ResponseCode:    http.StatusBadRequest,
 			ResponseMessage: "Password does not match confirmation password",
 			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
 		})
+		return
 	}
 
 	if body.NewPassword == body.OldPassword {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, utils.HTTPResponse{
+		utils.ResponseHandler(ctx, utils.HTTPResponse{
 			ResponseCode:    http.StatusBadRequest,
 			ResponseMessage: "Password can't be the same as old password",
 			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
 		})
+		return
 	}
 
 	user := utils.GetCurrentUser(ctx)
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.OldPassword))
 	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusForbidden, utils.HTTPResponse{
+		utils.ResponseHandler(ctx, utils.HTTPResponse{
 			ResponseCode:    http.StatusForbidden,
 			ResponseMessage: "Wrong old password",
 			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
 		})
+		return
 	}
 
 	hashedNewPassword, err := bcrypt.GenerateFromPassword([]byte(body.NewPassword), config.GetInstance().JWT.Cost)
@@ -231,11 +242,12 @@ func EmailPasswordIsValid(ctx *gin.Context, funcName string, body dto.AuthReques
 
 	_, err := mail.ParseAddress(body.Email)
 	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, utils.HTTPResponse{
+		utils.ResponseHandler(ctx, utils.HTTPResponse{
 			ResponseCode:    http.StatusBadRequest,
 			ResponseMessage: "Invalid email",
 			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
 		})
+		return false
 	}
 
 	isNotEmpty = utils.IsNotEmpty(ctx, body.Password, "Password")
