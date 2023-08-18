@@ -1,8 +1,6 @@
 package repository
 
 import (
-	"time"
-
 	"github.com/google/uuid"
 	"github.com/rifqifarelmuhammad/simple-todo-with-golang/internal/constant"
 	"github.com/rifqifarelmuhammad/simple-todo-with-golang/internal/database"
@@ -16,8 +14,6 @@ func CreateTodo(uid uuid.UUID, data dto.CreateTodoRequest) *models.Todo {
 		ID:          uuid.New(),
 		Title:       data.Title,
 		Description: data.Description,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
 		UserID:      uid,
 	}
 
