@@ -14,7 +14,7 @@ var router *gin.Engine
 
 func StartServer() {
 	router = gin.Default()
-	router.Use(gin.CustomRecovery(middleware.InternalServerErrorHandler))
+	router.Use(gin.CustomRecovery(middleware.PanicHandler))
 
 	RegisterRoutes()
 

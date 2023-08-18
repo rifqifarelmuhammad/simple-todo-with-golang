@@ -16,7 +16,7 @@ import (
 func RequireAuth(ctx *gin.Context) {
 	signedToken, err := ctx.Cookie(constant.ACCESS_TOKEN)
 	if err != nil {
-		ctx.AbortWithStatus(http.StatusUnauthorized)
+		ctx.AbortWithStatus(http.StatusForbidden)
 	}
 
 	rawToken, err := jwt.Parse(signedToken, func(token *jwt.Token) (interface{}, error) {
@@ -33,19 +33,19 @@ func RequireAuth(ctx *gin.Context) {
 
 	if claims, ok := rawToken.Claims.(jwt.MapClaims); ok && rawToken.Valid {
 		if float64(time.Now().Unix()) > claims["exp"].(float64) {
-			ctx.AbortWithStatus(http.StatusUnauthorized)
+			ctx.AbortWithStatus(http.StatusForbidden)
 		}
 
 		uid := claims["uid"].(string)
 
 		user := repository.FindUserByUid(uid)
 		if user.Email == "" {
-			ctx.AbortWithStatus(http.StatusUnauthorized)
+			ctx.AbortWithStatus(http.StatusForbidden)
 		}
 
 		ctx.Set("user", user)
 		ctx.Next()
 	} else {
-		ctx.AbortWithStatus(http.StatusUnauthorized)
+		ctx.AbortWithStatus(http.StatusForbidden)
 	}
 }

@@ -4,19 +4,29 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rifqifarelmuhammad/simple-todo-with-golang/utils"
 )
 
-type InternalServerErrorHTTPResponse struct {
+type PanicHTTPResponse struct {
 	ResponseCode    int
 	ResponseMessage string
 	ResponseStatus  string
 }
 
-func InternalServerErrorHandler(ctx *gin.Context, err any) {
-	response := InternalServerErrorHTTPResponse{
-		ResponseCode:    http.StatusInternalServerError,
-		ResponseMessage: "Request failed with status code 500",
-		ResponseStatus:  "FAILED",
+func PanicHandler(ctx *gin.Context, err any) {
+	var response PanicHTTPResponse
+	if ctx.Writer.Status() == 403 {
+		utils.ResponseHandler(ctx, utils.HTTPResponse{
+			ResponseCode:    http.StatusForbidden,
+			ResponseMessage: "Forbidden resource",
+			ResponseStatus:  "FAILED",
+		})
+	} else {
+		response = PanicHTTPResponse{
+			ResponseCode:    http.StatusInternalServerError,
+			ResponseMessage: "Request failed with status code 500",
+			ResponseStatus:  "FAILED",
+		}
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, response)
 	}
-	ctx.AbortWithStatusJSON(http.StatusInternalServerError, response)
 }
