@@ -9,4 +9,9 @@ type (
 		AuthRequest
 		ConfirmationPassword string `json:"confirmationPassword"`
 	}
+	ChangePasswordRequest struct {
+		OldPassword             string `json:"oldPassword"`
+		NewPassword             string `json:"newPassword"`
+		ConfirmationNewPassword string `json:"confirmationNewPassword"`
+	}
 )

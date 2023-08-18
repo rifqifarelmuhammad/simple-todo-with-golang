@@ -14,6 +14,7 @@ func AuthRoutes() {
 	authRouter := router.Group(AUTH_BASE_URL)
 	authRouter.POST("/registration", handler.Registration)
 	authRouter.POST("/login", handler.Login)
+	authRouter.PATCH("change-password", middleware.RequireAuth, handler.ChangePassword)
 	authRouter.POST("/logout", middleware.RequireAuth, handler.Logout)
 }
 

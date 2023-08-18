@@ -133,6 +133,76 @@ func Login(ctx *gin.Context) {
 	})
 }
 
+func ChangePassword(ctx *gin.Context) {
+	body := dto.ChangePasswordRequest{}
+	err := ctx.Bind(&body)
+	if err != nil {
+		utils.ResponseHandler(ctx, utils.HTTPResponse{
+			ResponseCode:    http.StatusBadRequest,
+			ResponseMessage: "Failed to read request body",
+			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
+		})
+
+		return
+	}
+
+	if len(body.NewPassword) < 8 {
+		utils.ResponseHandler(ctx, utils.HTTPResponse{
+			ResponseCode:    http.StatusBadRequest,
+			ResponseMessage: "Password too short",
+			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
+		})
+
+		return
+	}
+
+	if body.NewPassword != body.ConfirmationNewPassword {
+		utils.ResponseHandler(ctx, utils.HTTPResponse{
+			ResponseCode:    http.StatusBadRequest,
+			ResponseMessage: "Password does not match confirmation password",
+			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
+		})
+
+		return
+	}
+
+	if body.NewPassword == body.OldPassword {
+		utils.ResponseHandler(ctx, utils.HTTPResponse{
+			ResponseCode:    http.StatusBadRequest,
+			ResponseMessage: "Password can't be the same as old password",
+			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
+		})
+
+		return
+	}
+
+	user := utils.GetCurrentUser(ctx)
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.OldPassword))
+	if err != nil {
+		utils.ResponseHandler(ctx, utils.HTTPResponse{
+			ResponseCode:    http.StatusForbidden,
+			ResponseMessage: "Wrong old password",
+			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
+		})
+
+		return
+	}
+
+	hashedNewPassword, err := bcrypt.GenerateFromPassword([]byte(body.NewPassword), 10)
+	if err != nil {
+		log.Error(constant.TAG_SERVICES, hashedNewPassword, err, "auth[ChangePassword]: bcrypt.GenerateFromPassword failed to hash password")
+		panic(err)
+	}
+
+	repository.UpdatePassword(user, hashedNewPassword)
+
+	utils.ResponseHandler(ctx, utils.HTTPResponse{
+		ResponseCode:    http.StatusOK,
+		ResponseMessage: "Password changed successfully",
+		ResponseStatus:  utils.RESPONSE_STATUS_SUCCESS,
+	})
+}
+
 func Logout(ctx *gin.Context) {
 	ctx.SetCookie(constant.ACCESS_TOKEN, "", -1, "", "", true, true)
 	utils.ResponseHandler(ctx, utils.HTTPResponse{

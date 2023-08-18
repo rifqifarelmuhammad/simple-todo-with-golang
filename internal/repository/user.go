@@ -45,3 +45,12 @@ func FindUserByUid(uid string) *models.User {
 
 	return user
 }
+
+func UpdatePassword(user *models.User, hashedNewPassword []byte) {
+	user.Password = string(hashedNewPassword)
+	result := database.GetInstance().Save(user)
+	if result.Error != nil {
+		log.Error(constant.TAG_REPOSITORY, result, result.Error, "user[UpdatePassword]: Error query db on database.GetInstance().Save(args)")
+		panic(result.Error)
+	}
+}
