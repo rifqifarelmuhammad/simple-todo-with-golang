@@ -11,7 +11,7 @@ import (
 	"github.com/rifqifarelmuhammad/simple-todo-with-golang/log"
 )
 
-func CreateTodo(uid uuid.UUID, data dto.CreateTodoRequest) (*models.Todo, error) {
+func CreateTodo(uid uuid.UUID, data dto.CreateTodoRequest) *models.Todo {
 	todo := &models.Todo{
 		ID:          uuid.New(),
 		Title:       data.Title,
@@ -24,7 +24,8 @@ func CreateTodo(uid uuid.UUID, data dto.CreateTodoRequest) (*models.Todo, error)
 	result := database.GetInstance().Create(todo)
 	if result.Error != nil {
 		log.Error(constant.TAG_REPOSITORY, result, result.Error, "todo[CreateTodo]: Error query db on database.GetInstance().Create")
+		panic(result.Error)
 	}
 
-	return todo, result.Error
+	return todo
 }

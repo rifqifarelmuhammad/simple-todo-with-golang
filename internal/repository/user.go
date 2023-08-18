@@ -8,7 +8,7 @@ import (
 	"github.com/rifqifarelmuhammad/simple-todo-with-golang/log"
 )
 
-func CreateUser(email string, hashedPassword []byte) error {
+func CreateUser(email string, hashedPassword []byte) {
 	user := &models.User{
 		UID:      uuid.New(),
 		Email:    email,
@@ -18,27 +18,28 @@ func CreateUser(email string, hashedPassword []byte) error {
 	result := database.GetInstance().Create(user)
 	if result.Error != nil {
 		log.Error(constant.TAG_REPOSITORY, result, result.Error, "user[CreateUser]: Error query db on database.GetInstance().Create")
+		panic(result.Error)
 	}
-
-	return result.Error
 }
 
-func FindUserByEmail(email string) (*models.User, error) {
+func FindUserByEmail(email string) *models.User {
 	user := &models.User{}
 	result := database.GetInstance().Find(user, models.User{Email: email})
 	if result.Error != nil {
 		log.Error(constant.TAG_REPOSITORY, result, result.Error, "user[FindUserByEmail]: Error query db on database.GetInstance().Find")
+		panic(result.Error)
 	}
 
-	return user, result.Error
+	return user
 }
 
-func FindUserByUid(uid uuid.UUID) (*models.User, error) {
+func FindUserByUid(uid uuid.UUID) *models.User {
 	user := &models.User{}
 	result := database.GetInstance().Find(user, models.User{UID: uid})
 	if result.Error != nil {
 		log.Error(constant.TAG_REPOSITORY, result, result.Error, "user[FindUserByUid]: Error query db on database.GetInstance().Find")
+		panic(result.Error)
 	}
 
-	return user, result.Error
+	return user
 }

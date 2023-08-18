@@ -65,12 +65,7 @@ func Registration(ctx *gin.Context) {
 		return
 	}
 
-	user, err := repository.FindUserByEmail(body.Email)
-	if err != nil {
-		utils.InternalServerErrorResponse(ctx)
-		return
-	}
-
+	user := repository.FindUserByEmail(body.Email)
 	if user.Email != "" {
 		utils.ResponseHandler(ctx, utils.HTTPResponse{
 			ResponseCode:    http.StatusConflict,
@@ -84,21 +79,12 @@ func Registration(ctx *gin.Context) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(body.Password), 10)
 	if err != nil {
 		log.Error(constant.TAG_SERVICES, hashedPassword, err, "auth[Registration]: bcrypt.GenerateFromPassword failed to hash password")
-		utils.InternalServerErrorResponse(ctx)
-
-		return
+		panic(err)
 	}
 
-	err = repository.CreateUser(body.Email, hashedPassword)
-	if err != nil {
-		utils.InternalServerErrorResponse(ctx)
-		return
-	}
+	repository.CreateUser(body.Email, hashedPassword)
 
-	signedToken, err := SetAccessToken(ctx, user.UID)
-	if err != nil {
-		return
-	}
+	signedToken := SetAccessToken(ctx, user.UID)
 
 	utils.ResponseHandler(ctx, utils.HTTPResponse{
 		ResponseCode:    http.StatusCreated,
@@ -126,11 +112,7 @@ func Login(ctx *gin.Context) {
 		return
 	}
 
-	user, err := repository.FindUserByEmail(body.Email)
-	if err != nil {
-		return
-	}
-
+	user := repository.FindUserByEmail(body.Email)
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.Password))
 	if user.Email == "" || err != nil {
 		utils.ResponseHandler(ctx, utils.HTTPResponse{
@@ -142,10 +124,7 @@ func Login(ctx *gin.Context) {
 		return
 	}
 
-	signedToken, err := SetAccessToken(ctx, user.UID)
-	if err != nil {
-		return
-	}
+	signedToken := SetAccessToken(ctx, user.UID)
 
 	utils.ResponseHandler(ctx, utils.HTTPResponse{
 		ResponseCode:    http.StatusOK,
@@ -199,7 +178,7 @@ func BodyRequestValidation(ctx *gin.Context, funcName string, body dto.AuthReque
 	return true
 }
 
-func SetAccessToken(ctx *gin.Context, uid uuid.UUID) (string, error) {
+func SetAccessToken(ctx *gin.Context, uid uuid.UUID) string {
 	rawToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"uid": uid,
 		"exp": time.Now().Add(time.Hour * 24 * time.Duration(config.GetInstance().JWT.ExpireTime)).Unix(),
@@ -208,13 +187,11 @@ func SetAccessToken(ctx *gin.Context, uid uuid.UUID) (string, error) {
 	signedToken, err := rawToken.SignedString([]byte(config.GetInstance().JWT.SecretKey))
 	if err != nil {
 		log.Error(constant.TAG_SERVICES, signedToken, err, "auth[Login]: rawToken.SignedString failed to create jwt token")
-		utils.InternalServerErrorResponse(ctx)
-
-		return "", err
+		panic(err)
 	}
 
 	ctx.SetSameSite(http.SameSiteLaxMode)
 	ctx.SetCookie(constant.ACCESS_TOKEN, signedToken, 3600*24*config.GetInstance().JWT.ExpireTime, "", "", true, true)
 
-	return signedToken, nil
+	return signedToken
 }

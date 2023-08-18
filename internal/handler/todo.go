@@ -51,10 +51,7 @@ func CreateTodo(ctx *gin.Context) {
 	}
 
 	user := utils.GetCurrentUser(ctx)
-	todo, err := repository.CreateTodo(user.UID, body)
-	if err != nil {
-		return
-	}
+	todo := repository.CreateTodo(user.UID, body)
 
 	responseData := dto.CreateTodoResponse{
 		ID:          todo.ID,

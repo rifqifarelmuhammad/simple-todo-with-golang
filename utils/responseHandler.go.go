@@ -1,10 +1,6 @@
 package utils
 
-import (
-	"net/http"
-
-	"github.com/gin-gonic/gin"
-)
+import "github.com/gin-gonic/gin"
 
 type HTTPResponse struct {
 	ResponseCode    int
@@ -30,12 +26,4 @@ func ResponseHandler(ctx *gin.Context, resData HTTPResponse) {
 	}
 
 	ctx.JSON(resData.ResponseCode, responseBody)
-}
-
-func InternalServerErrorResponse(c *gin.Context) {
-	ResponseHandler(c, HTTPResponse{
-		ResponseCode:    http.StatusInternalServerError,
-		ResponseMessage: "Request failed with status code 500",
-		ResponseStatus:  RESPONSE_STATUS_FAILED,
-	})
 }

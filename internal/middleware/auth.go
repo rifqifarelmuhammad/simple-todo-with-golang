@@ -30,7 +30,7 @@ func RequireAuth(ctx *gin.Context) {
 
 	if err != nil {
 		log.Error(constant.TAG_MIDDLEWARE, rawToken, err, "auth[RequireAuth]: jwt.Parse failed to parse signedToken")
-		ctx.AbortWithStatus(http.StatusInternalServerError)
+		panic(err)
 	}
 
 	if claims, ok := rawToken.Claims.(jwt.MapClaims); ok && rawToken.Valid {
@@ -40,11 +40,7 @@ func RequireAuth(ctx *gin.Context) {
 
 		uid, _ := uuid.FromBytes([]byte(claims["uid"].(string)))
 
-		user, err := repository.FindUserByUid(uid)
-		if err != nil {
-			ctx.AbortWithStatus(http.StatusInternalServerError)
-		}
-
+		user := repository.FindUserByUid(uid)
 		if user.Email == "" {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 		}
