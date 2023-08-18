@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/rifqifarelmuhammad/simple-todo-with-golang/internal/dto"
+	"github.com/rifqifarelmuhammad/simple-todo-with-golang/internal/models"
 	"github.com/rifqifarelmuhammad/simple-todo-with-golang/internal/repository"
 	"github.com/rifqifarelmuhammad/simple-todo-with-golang/utils"
 )
@@ -14,43 +15,30 @@ func GetAllTodo(ctx *gin.Context) {
 	resposeData := repository.FindTodoByUserId(user.UID)
 
 	utils.ResponseHandler(ctx, utils.HTTPResponse{
-		ResponseCode:    http.StatusOK,
+		ResponseCode:    utils.DEFAULT_RESPONSE_CODE,
 		ResponseMessage: utils.DEFAULT_RESPONSE_MESSAGE,
 		ResponseStatus:  utils.RESPONSE_STATUS_SUCCESS,
-		Data:            resposeData,
-	})
+	}, resposeData)
 }
 
 func CreateTodo(ctx *gin.Context) {
 	body := dto.CreateTodoRequest{}
 	err := ctx.Bind(&body)
 	if err != nil {
-		utils.ResponseHandler(ctx, utils.HTTPResponse{
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, utils.HTTPResponse{
 			ResponseCode:    http.StatusBadRequest,
 			ResponseMessage: "Failed to read request body",
 			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
 		})
+	}
 
+	isNotEmpty := utils.IsNotEmpty(ctx, body.Title, "Title")
+	if !isNotEmpty {
 		return
 	}
 
-	if body.Title == "" {
-		utils.ResponseHandler(ctx, utils.HTTPResponse{
-			ResponseCode:    http.StatusBadRequest,
-			ResponseMessage: "Title cannot be empty",
-			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
-		})
-
-		return
-	}
-
-	if body.Description == "" {
-		utils.ResponseHandler(ctx, utils.HTTPResponse{
-			ResponseCode:    http.StatusBadRequest,
-			ResponseMessage: "Description cannot be empty",
-			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
-		})
-
+	isNotEmpty = utils.IsNotEmpty(ctx, body.Description, "Description")
+	if !isNotEmpty {
 		return
 	}
 
@@ -69,61 +57,51 @@ func CreateTodo(ctx *gin.Context) {
 		ResponseCode:    http.StatusCreated,
 		ResponseMessage: "Todo has been created",
 		ResponseStatus:  utils.RESPONSE_STATUS_SUCCESS,
-		Data:            responseData,
-	})
+	}, responseData)
 }
 
 func UpdateTodo(ctx *gin.Context) {
-	user := utils.GetCurrentUser(ctx)
-	todo := repository.FindTodoById(ctx.Param("todoId"))
-	if todo.ID == "" || todo.UserID != user.UID {
-		utils.ResponseHandler(ctx, utils.HTTPResponse{
-			ResponseCode:    http.StatusBadRequest,
-			ResponseMessage: "Invalid Todo ID",
-			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
-		})
-
-		return
-	}
+	todo := TodoIDValidation(ctx)
 
 	updatedTodo := repository.UpdateIsCompleted(todo)
 
 	utils.ResponseHandler(ctx, utils.HTTPResponse{
-		ResponseCode:    http.StatusOK,
+		ResponseCode:    utils.DEFAULT_RESPONSE_CODE,
 		ResponseMessage: "Todo has been updated",
 		ResponseStatus:  utils.RESPONSE_STATUS_SUCCESS,
-		Data:            updatedTodo,
-	})
+	}, updatedTodo)
 }
 
 func DeleteTodo(ctx *gin.Context) {
-	user := utils.GetCurrentUser(ctx)
-	todo := repository.FindTodoById(ctx.Param("todoId"))
-	if todo.ID == "" || todo.UserID != user.UID {
-		utils.ResponseHandler(ctx, utils.HTTPResponse{
-			ResponseCode:    http.StatusBadRequest,
-			ResponseMessage: "Invalid Todo ID",
-			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
-		})
-
-		return
-	}
+	todo := TodoIDValidation(ctx)
 
 	if todo.IsDeleted {
-		utils.ResponseHandler(ctx, utils.HTTPResponse{
-			ResponseCode:    http.StatusBadRequest,
+		ctx.AbortWithStatusJSON(http.StatusMethodNotAllowed, utils.HTTPResponse{
+			ResponseCode:    http.StatusMethodNotAllowed,
 			ResponseMessage: "Todo was deleted previously",
 			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
 		})
-
-		return
 	}
 
 	repository.UpdateIsDeleted(todo)
 
 	utils.ResponseHandler(ctx, utils.HTTPResponse{
-		ResponseCode:    http.StatusOK,
+		ResponseCode:    utils.DEFAULT_RESPONSE_CODE,
 		ResponseMessage: "Todo has been deleted",
 		ResponseStatus:  utils.RESPONSE_STATUS_SUCCESS,
 	})
+}
+
+func TodoIDValidation(ctx *gin.Context) *models.Todo {
+	user := utils.GetCurrentUser(ctx)
+	todo := repository.FindTodoById(ctx.Param("todoId"))
+	if todo.ID == "" || todo.UserID != user.UID {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, utils.HTTPResponse{
+			ResponseCode:    http.StatusBadRequest,
+			ResponseMessage: "Invalid Todo ID",
+			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
+		})
+	}
+
+	return todo
 }

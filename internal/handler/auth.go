@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 	"net/mail"
 	"strings"
@@ -18,60 +17,56 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+const (
+	MINIMUM_PASSWORD_LENGTH = 8
+)
+
 func Registration(ctx *gin.Context) {
 	body := dto.RegistrationRequest{}
 	err := ctx.Bind(&body)
 	if err != nil {
-		utils.ResponseHandler(ctx, utils.HTTPResponse{
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, utils.HTTPResponse{
 			ResponseCode:    http.StatusBadRequest,
 			ResponseMessage: "Failed to read request body",
 			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
 		})
+	}
 
+	emailPasswordIsValid := EmailPasswordIsValid(ctx, "Registration", body.AuthRequest)
+	if !emailPasswordIsValid {
 		return
 	}
 
-	valid := EmailPasswordIsValid(ctx, "Registration", body.AuthRequest)
-	if !valid {
+	isNotEmpty := utils.IsNotEmpty(ctx, body.ConfirmationPassword, "Confirmation password")
+	if !isNotEmpty {
 		return
 	}
 
-	confirmationPasswordIsEmpty := IsEmpty(ctx, body.ConfirmationPassword, "Confirmation password")
-	if confirmationPasswordIsEmpty {
-		return
-	}
-
-	if len(body.Password) < 8 {
-		utils.ResponseHandler(ctx, utils.HTTPResponse{
+	if len(body.Password) < MINIMUM_PASSWORD_LENGTH {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, utils.HTTPResponse{
 			ResponseCode:    http.StatusBadRequest,
 			ResponseMessage: "Password too short",
 			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
 		})
-
-		return
 	}
 
 	if body.Password != body.ConfirmationPassword {
-		utils.ResponseHandler(ctx, utils.HTTPResponse{
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, utils.HTTPResponse{
 			ResponseCode:    http.StatusBadRequest,
 			ResponseMessage: "Password does not match confirmation password",
 			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
 		})
-
-		return
 	}
 
 	lowerCasedEmail := strings.ToLower(body.Email)
 
 	user := repository.FindUserByEmail(lowerCasedEmail)
 	if user.UID != "" {
-		utils.ResponseHandler(ctx, utils.HTTPResponse{
+		ctx.AbortWithStatusJSON(http.StatusConflict, utils.HTTPResponse{
 			ResponseCode:    http.StatusConflict,
 			ResponseMessage: "User already exists",
 			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
 		})
-
-		return
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(body.Password), config.GetInstance().JWT.Cost)
@@ -88,118 +83,102 @@ func Registration(ctx *gin.Context) {
 		ResponseCode:    http.StatusCreated,
 		ResponseMessage: "User successfully registered",
 		ResponseStatus:  utils.RESPONSE_STATUS_SUCCESS,
-		Data:            signedToken,
-	})
+	}, signedToken)
 }
 
 func Login(ctx *gin.Context) {
 	body := dto.AuthRequest{}
 	err := ctx.Bind(&body)
 	if err != nil {
-		utils.ResponseHandler(ctx, utils.HTTPResponse{
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, utils.HTTPResponse{
 			ResponseCode:    http.StatusBadRequest,
 			ResponseMessage: "Failed to read request body",
 			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
 		})
-
-		return
 	}
 
-	valid := EmailPasswordIsValid(ctx, "Registration", body)
-	if !valid {
+	emailPasswordIsValid := EmailPasswordIsValid(ctx, "Registration", body)
+	if emailPasswordIsValid {
 		return
 	}
 
 	user := repository.FindUserByEmail(body.Email)
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.Password))
 	if user.UID == "" || err != nil {
-		utils.ResponseHandler(ctx, utils.HTTPResponse{
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, utils.HTTPResponse{
 			ResponseCode:    http.StatusUnauthorized,
 			ResponseMessage: "Invalid Email or Password",
 			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
 		})
-
-		return
 	}
 
 	signedToken := SetAccessToken(ctx, user.UID)
 
 	utils.ResponseHandler(ctx, utils.HTTPResponse{
-		ResponseCode:    http.StatusOK,
+		ResponseCode:    utils.DEFAULT_RESPONSE_CODE,
 		ResponseMessage: "Login successful",
 		ResponseStatus:  utils.RESPONSE_STATUS_SUCCESS,
-		Data:            signedToken,
-	})
+	}, signedToken)
 }
 
 func ChangePassword(ctx *gin.Context) {
 	body := dto.ChangePasswordRequest{}
 	err := ctx.Bind(&body)
 	if err != nil {
-		utils.ResponseHandler(ctx, utils.HTTPResponse{
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, utils.HTTPResponse{
 			ResponseCode:    http.StatusBadRequest,
 			ResponseMessage: "Failed to read request body",
 			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
 		})
+	}
 
+	isNotEmpty := utils.IsNotEmpty(ctx, body.OldPassword, "Old password")
+	if !isNotEmpty {
 		return
 	}
 
-	isEmpty := IsEmpty(ctx, body.OldPassword, "Old password")
-	if isEmpty {
+	isNotEmpty = utils.IsNotEmpty(ctx, body.NewPassword, "New password")
+	if !isNotEmpty {
 		return
 	}
 
-	isEmpty = IsEmpty(ctx, body.NewPassword, "New password")
-	if isEmpty {
+	isNotEmpty = utils.IsNotEmpty(ctx, body.ConfirmationNewPassword, "Confirmation password")
+	if !isNotEmpty {
 		return
 	}
 
-	isEmpty = IsEmpty(ctx, body.ConfirmationNewPassword, "Confirmation password")
-	if isEmpty {
-		return
-	}
-
-	if len(body.NewPassword) < 8 {
-		utils.ResponseHandler(ctx, utils.HTTPResponse{
+	if len(body.NewPassword) < MINIMUM_PASSWORD_LENGTH {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, utils.HTTPResponse{
 			ResponseCode:    http.StatusBadRequest,
 			ResponseMessage: "Password too short",
 			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
 		})
-
-		return
 	}
 
 	if body.NewPassword != body.ConfirmationNewPassword {
-		utils.ResponseHandler(ctx, utils.HTTPResponse{
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, utils.HTTPResponse{
 			ResponseCode:    http.StatusBadRequest,
 			ResponseMessage: "Password does not match confirmation password",
 			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
 		})
-
-		return
 	}
 
 	if body.NewPassword == body.OldPassword {
-		utils.ResponseHandler(ctx, utils.HTTPResponse{
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, utils.HTTPResponse{
 			ResponseCode:    http.StatusBadRequest,
 			ResponseMessage: "Password can't be the same as old password",
 			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
 		})
-
-		return
 	}
 
 	user := utils.GetCurrentUser(ctx)
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.OldPassword))
 	if err != nil {
-		utils.ResponseHandler(ctx, utils.HTTPResponse{
+		ctx.AbortWithStatusJSON(http.StatusForbidden, utils.HTTPResponse{
 			ResponseCode:    http.StatusForbidden,
 			ResponseMessage: "Wrong old password",
 			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
 		})
-
-		return
 	}
 
 	hashedNewPassword, err := bcrypt.GenerateFromPassword([]byte(body.NewPassword), config.GetInstance().JWT.Cost)
@@ -211,7 +190,7 @@ func ChangePassword(ctx *gin.Context) {
 	repository.UpdatePassword(user, hashedNewPassword)
 
 	utils.ResponseHandler(ctx, utils.HTTPResponse{
-		ResponseCode:    http.StatusOK,
+		ResponseCode:    utils.DEFAULT_RESPONSE_CODE,
 		ResponseMessage: "Password changed successfully",
 		ResponseStatus:  utils.RESPONSE_STATUS_SUCCESS,
 	})
@@ -220,7 +199,7 @@ func ChangePassword(ctx *gin.Context) {
 func Logout(ctx *gin.Context) {
 	ctx.SetCookie(constant.ACCESS_TOKEN, "", -1, "", "", true, true)
 	utils.ResponseHandler(ctx, utils.HTTPResponse{
-		ResponseCode:    http.StatusOK,
+		ResponseCode:    utils.DEFAULT_RESPONSE_CODE,
 		ResponseMessage: "Logout successful",
 		ResponseStatus:  utils.RESPONSE_STATUS_SUCCESS,
 	})
@@ -245,40 +224,21 @@ func SetAccessToken(ctx *gin.Context, uid string) string {
 }
 
 func EmailPasswordIsValid(ctx *gin.Context, funcName string, body dto.AuthRequest) bool {
-	isEmpty := IsEmpty(ctx, body.Email, "Email")
-	if isEmpty {
+	isNotEmpty := utils.IsNotEmpty(ctx, body.Email, "Email")
+	if !isNotEmpty {
 		return false
 	}
 
 	_, err := mail.ParseAddress(body.Email)
 	if err != nil {
-		utils.ResponseHandler(ctx, utils.HTTPResponse{
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, utils.HTTPResponse{
 			ResponseCode:    http.StatusBadRequest,
 			ResponseMessage: "Invalid email",
 			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
 		})
-
-		return false
 	}
 
-	isEmpty = IsEmpty(ctx, body.Password, "Password")
-	if isEmpty {
-		return false
-	}
+	isNotEmpty = utils.IsNotEmpty(ctx, body.Password, "Password")
 
-	return true
-}
-
-func IsEmpty(ctx *gin.Context, data string, dataName string) bool {
-	if data == "" {
-		utils.ResponseHandler(ctx, utils.HTTPResponse{
-			ResponseCode:    http.StatusBadRequest,
-			ResponseMessage: fmt.Sprintf("%s cannot be empty", dataName),
-			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
-		})
-
-		return true
-	}
-
-	return false
+	return isNotEmpty
 }

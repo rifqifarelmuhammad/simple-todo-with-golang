@@ -1,29 +1,37 @@
 package utils
 
-import "github.com/gin-gonic/gin"
+import (
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+)
 
 type HTTPResponse struct {
 	ResponseCode    int
 	ResponseMessage string
 	ResponseStatus  string
-	Data            interface{}
 }
 
 const (
+	DEFAULT_RESPONSE_CODE    = http.StatusOK
 	DEFAULT_RESPONSE_MESSAGE = "Data retrieved successfully"
 	RESPONSE_STATUS_SUCCESS  = "SUCCESS"
 	RESPONSE_STATUS_FAILED   = "FAILED"
 )
 
-func ResponseHandler(ctx *gin.Context, resData HTTPResponse) {
+func ResponseHandler(ctx *gin.Context, httpResponse HTTPResponse, data ...interface{}) {
 	responseBody := make(map[string]interface{})
-	responseBody["responseCode"] = resData.ResponseCode
-	responseBody["responseMessage"] = resData.ResponseMessage
-	responseBody["responseStatus"] = resData.ResponseStatus
+	responseBody["responseCode"] = httpResponse.ResponseCode
+	responseBody["responseMessage"] = httpResponse.ResponseMessage
+	responseBody["responseStatus"] = httpResponse.ResponseStatus
 
-	if resData.Data != nil {
-		responseBody["data"] = resData.Data
+	if data != nil {
+		if len(data) == 1 {
+			responseBody["data"] = data[0]
+		} else {
+			responseBody["data"] = data
+		}
 	}
 
-	ctx.JSON(resData.ResponseCode, responseBody)
+	ctx.JSON(httpResponse.ResponseCode, responseBody)
 }
