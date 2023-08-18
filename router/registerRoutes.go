@@ -12,16 +12,21 @@ func RegisterRoutes() {
 
 func AuthRoutes() {
 	authRouter := router.Group(AUTH_BASE_URL)
+
 	authRouter.POST("/registration", handler.Registration)
 	authRouter.POST("/login", handler.Login)
-	authRouter.PATCH("change-password", middleware.RequireAuth, handler.ChangePassword)
-	authRouter.POST("/logout", middleware.RequireAuth, handler.Logout)
+
+	authRouter.Use(middleware.RequireAuth)
+	authRouter.PATCH("/change-password", handler.ChangePassword)
+	authRouter.POST("/logout", handler.Logout)
 }
 
 func TodoRoutes() {
 	todoRoutes := router.Group(TODO_BASE_URL)
-	todoRoutes.GET("", middleware.RequireAuth, handler.GetAllTodo)
-	todoRoutes.POST("", middleware.RequireAuth, handler.CreateTodo)
-	todoRoutes.PATCH("/:todoId", middleware.RequireAuth, handler.UpdateTodo)
-	todoRoutes.PATCH("/delete/:todoId", middleware.RequireAuth, handler.DeleteTodo)
+	todoRoutes.Use(middleware.RequireAuth)
+
+	todoRoutes.GET("", handler.GetAllTodo)
+	todoRoutes.POST("", handler.CreateTodo)
+	todoRoutes.PATCH("/:todoId", handler.UpdateTodo)
+	todoRoutes.PATCH("/delete/:todoId", handler.DeleteTodo)
 }
