@@ -19,6 +19,6 @@ func AuthRoutes() {
 
 func TodoRoutes() {
 	todoRoutes := router.Group(TODO_BASE_URL)
-	todoRoutes.GET("", middleware.RequireAuth, handler.GetTodo)
+	todoRoutes.GET("", middleware.RequireAuth, handler.GetAllTodo)
 	todoRoutes.POST("", middleware.RequireAuth, handler.CreateTodo)
 }

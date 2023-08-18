@@ -9,11 +9,15 @@ import (
 	"github.com/rifqifarelmuhammad/simple-todo-with-golang/utils"
 )
 
-func GetTodo(ctx *gin.Context) {
+func GetAllTodo(ctx *gin.Context) {
+	user := utils.GetCurrentUser(ctx)
+	resposeData := repository.FindTodoByUserId(user.UID)
+
 	utils.ResponseHandler(ctx, utils.HTTPResponse{
 		ResponseCode:    http.StatusOK,
 		ResponseMessage: utils.DEFAULT_RESPONSE_MESSAGE,
 		ResponseStatus:  utils.RESPONSE_STATUS_SUCCESS,
+		Data:            resposeData,
 	})
 }
 
@@ -53,7 +57,7 @@ func CreateTodo(ctx *gin.Context) {
 	user := utils.GetCurrentUser(ctx)
 	todo := repository.CreateTodo(user.UID, body)
 
-	responseData := dto.CreateTodoResponse{
+	responseData := dto.GeneralTodoResponse{
 		ID:          todo.ID,
 		Title:       todo.Title,
 		Description: todo.Description,

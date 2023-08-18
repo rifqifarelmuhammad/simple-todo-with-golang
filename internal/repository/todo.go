@@ -9,6 +9,17 @@ import (
 	"github.com/rifqifarelmuhammad/simple-todo-with-golang/log"
 )
 
+func FindTodoByUserId(userId uuid.UUID) *[]dto.GeneralTodoResponse {
+	todos := &[]dto.GeneralTodoResponse{}
+	result := database.GetInstance().Raw("SELECT id, title, description, is_completed, updated_at FROM todos WHERE user_id = ?", userId).Scan(todos)
+	if result.Error != nil {
+		log.Error(constant.TAG_REPOSITORY, result, result.Error, "todo[FindTodoByUserId]: Error query db on database.GetInstance().Find")
+		panic(result.Error)
+	}
+
+	return todos
+}
+
 func CreateTodo(uid uuid.UUID, data dto.CreateTodoRequest) *models.Todo {
 	todo := &models.Todo{
 		ID:          uuid.New(),
