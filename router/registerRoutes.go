@@ -22,4 +22,5 @@ func TodoRoutes() {
 	todoRoutes.GET("", middleware.RequireAuth, handler.GetAllTodo)
 	todoRoutes.POST("", middleware.RequireAuth, handler.CreateTodo)
 	todoRoutes.PATCH("/:todoId", middleware.RequireAuth, handler.UpdateTodo)
+	todoRoutes.PATCH("/delete/:todoId", middleware.RequireAuth, handler.DeleteTodo)
 }

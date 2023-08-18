@@ -95,3 +95,35 @@ func UpdateTodo(ctx *gin.Context) {
 		Data:            updatedTodo,
 	})
 }
+
+func DeleteTodo(ctx *gin.Context) {
+	user := utils.GetCurrentUser(ctx)
+	todo := repository.FindTodoById(ctx.Param("todoId"))
+	if todo.ID == "" || todo.UserID != user.UID {
+		utils.ResponseHandler(ctx, utils.HTTPResponse{
+			ResponseCode:    http.StatusBadRequest,
+			ResponseMessage: "Invalid Todo ID",
+			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
+		})
+
+		return
+	}
+
+	if todo.IsDeleted {
+		utils.ResponseHandler(ctx, utils.HTTPResponse{
+			ResponseCode:    http.StatusBadRequest,
+			ResponseMessage: "Todo was deleted previously",
+			ResponseStatus:  utils.RESPONSE_STATUS_FAILED,
+		})
+
+		return
+	}
+
+	repository.UpdateIsDeleted(todo)
+
+	utils.ResponseHandler(ctx, utils.HTTPResponse{
+		ResponseCode:    http.StatusOK,
+		ResponseMessage: "Todo has been deleted",
+		ResponseStatus:  utils.RESPONSE_STATUS_SUCCESS,
+	})
+}

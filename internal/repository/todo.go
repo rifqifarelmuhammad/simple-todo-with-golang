@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"fmt"
+
 	"github.com/google/uuid"
 	"github.com/rifqifarelmuhammad/simple-todo-with-golang/internal/constant"
 	"github.com/rifqifarelmuhammad/simple-todo-with-golang/internal/database"
@@ -61,4 +63,13 @@ func UpdateIsCompleted(todo *models.Todo) *dto.UpdateTodoResponse {
 	}
 
 	return response
+}
+
+func UpdateIsDeleted(todo *models.Todo) {
+	todo.IsDeleted = true
+	result := database.GetInstance().Save(todo)
+	if result.Error != nil {
+		log.Error(constant.TAG_REPOSITORY, result, result.Error, "todo[UpdateIsDeleted]: Error query db on database.GetInstance().Save(args)")
+		panic(result.Error)
+	}
 }
