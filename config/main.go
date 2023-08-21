@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/joho/godotenv"
 	"github.com/rifqifarelmuhammad/simple-todo-with-golang/internal/constant"
@@ -27,19 +28,22 @@ func LoadEnvVariables() {
 
 func GenerateConfig() *Config {
 	return &Config{
-		Port: GetEnv(PORT),
+		Server: Server{
+			Port:      GetStringEnv(APP_PORT),
+			Whitelist: GetArrayOfStringEnv(APP_WHITELIST),
+		},
 		Database: Database{
-			Host:     GetEnv(DB_HOST),
-			Port:     StringToInt(GetEnv(DB_PORT), 5432),
-			User:     GetEnv(DB_USER),
-			Password: GetEnv(DB_PASSWORD),
-			Name:     GetEnv(DB_NAME),
-			SSLMode:  GetEnv(DB_SSL_MODE),
+			Host:     GetStringEnv(DB_HOST),
+			Port:     StringToInt(GetStringEnv(DB_PORT), 5432),
+			User:     GetStringEnv(DB_USER),
+			Password: GetStringEnv(DB_PASSWORD),
+			Name:     GetStringEnv(DB_NAME),
+			SSLMode:  GetStringEnv(DB_SSL_MODE),
 		},
 		JWT: JWT{
-			ExpireTime: StringToInt(GetEnv(JWT_EXPIRE_TIME), 7),
-			SecretKey:  GetEnv(JWT_SECRET_KEY),
-			Cost:       StringToInt(GetEnv(JWT_COST), 7),
+			ExpireTime: StringToInt(GetStringEnv(JWT_EXPIRE_TIME), 7),
+			SecretKey:  GetStringEnv(JWT_SECRET_KEY),
+			Cost:       StringToInt(GetStringEnv(JWT_COST), 7),
 		},
 	}
 }
@@ -52,6 +56,10 @@ func StringToInt(str string, alternate int) int {
 	return result
 }
 
-func GetEnv(key envKey) string {
+func GetStringEnv(key envKey) string {
 	return os.Getenv(string(key))
+}
+
+func GetArrayOfStringEnv(key envKey) []string {
+	return strings.Split(os.Getenv(string(key)), ",")
 }

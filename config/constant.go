@@ -1,7 +1,8 @@
 package config
 
 const (
-	PORT envKey = "PORT"
+	APP_PORT      envKey = "APP_PORT"
+	APP_WHITELIST envKey = "APP_WHITELIST"
 
 	DB_HOST     envKey = "DB_HOST"
 	DB_PORT     envKey = "DB_PORT"

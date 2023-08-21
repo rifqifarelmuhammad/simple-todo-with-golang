@@ -3,9 +3,14 @@ package config
 type envKey string
 
 type Config struct {
-	Port     string
+	Server   Server
 	Database Database
 	JWT      JWT
+}
+
+type Server struct {
+	Port      string
+	Whitelist []string
 }
 
 type Database struct {
